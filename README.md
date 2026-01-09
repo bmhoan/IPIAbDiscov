@@ -61,7 +61,9 @@ python __main__.py process \
   --fastq-folder Miseq104/Fastq
 
 python  __main__.py combine --folder Miseq104/results
+
 python  __main__.py  pick-leads --folder Miseq104/results
+
 python  __main__.py check-repeats --folder Miseq104/results
 
 
