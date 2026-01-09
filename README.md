@@ -34,7 +34,7 @@ Repository: https://github.com/bmhoan/IPIAbDiscov
 
 
 
-# package installtion
+# Package installtion
 
 download abodydisco from ipi githup
 
