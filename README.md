@@ -7,9 +7,13 @@ IPIAbDiscov allow to accelerate the transition from huge amount of NGS data to v
 # Key Features
 
 FASTQ Processing: Quality trimming, filtering, and annotation of antibody sequences using tools like fastp and ANARCI for accurate numbering and germline assignment of Fab or scFv fragments.
+
 Data Aggregation: Combine results from multiple samples or rounds to generate comprehensive repertoire tables.
+
 Lead Selection: Automated ranking and selection of top-enriched sequences based on read counts and enrichment metrics.
+
 Repeatability Checks: Identify and quantify repeated or duplicated sequences across datasets.
+
 
 The package is lightweight, dependency-managed (via requirements.txt and Bioconda tools), and configured through YAML files and sample sheets, making it suitable for MiSeq or similar NGS runs in antibody discovery projects.
 Potential Future Enhancements
