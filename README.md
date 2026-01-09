@@ -53,8 +53,8 @@ cd abodydisco
 
 python __main__.py process \
   --config config.yaml \
-  --sample-sheet /Users/Hoan.Nguyen/ComBio/NGS/Projects/AntibodyDiscovery/Miseq104/Fastq/Miseq104_SampleSheet.xlsx \
-  --fastq-folder /Users/Hoan.Nguyen/ComBio/NGS/Projects/AntibodyDiscovery/Miseq104/Fastq
+  --sample-sheet Miseq104/Fastq/Miseq104_SampleSheet.xlsx \
+  --fastq-folder Miseq104/Fastq
 
 python  __main__.py combine --folder /Users/Hoan.Nguyen/ComBio/NGS/Projects/AntibodyDiscovery/Miseq104/results
 python  __main__.py  pick-leads --folder /Users/Hoan.Nguyen/ComBio/NGS/Projects/AntibodyDiscovery/Miseq104/results
