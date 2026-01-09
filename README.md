@@ -56,9 +56,9 @@ python __main__.py process \
   --sample-sheet Miseq104/Fastq/Miseq104_SampleSheet.xlsx \
   --fastq-folder Miseq104/Fastq
 
-python  __main__.py combine --folder /Users/Hoan.Nguyen/ComBio/NGS/Projects/AntibodyDiscovery/Miseq104/results
-python  __main__.py  pick-leads --folder /Users/Hoan.Nguyen/ComBio/NGS/Projects/AntibodyDiscovery/Miseq104/results
-python  __main__.py check-repeats --folder /Users/Hoan.Nguyen/ComBio/NGS/Projects/AntibodyDiscovery/Miseq104/results
+python  __main__.py combine --folder Miseq104/results
+python  __main__.py  pick-leads --folder Miseq104/results
+python  __main__.py check-repeats --folder Miseq104/results
 
 
 # My pipeline configuration
