@@ -67,6 +67,10 @@ python  __main__.py  pick-leads --folder Miseq104/results
 python  __main__.py check-repeats --folder Miseq104/results
 
 
+#run full pipeline with all steps
+python __main__.py run-all --config config.yaml --sample-sheet Miseq88_samplesheet.xlsx --fastq-folder /NGS_20240912_MiSeq88/Fastq
+
+
 # My pipeline configuration
 #config.yaml - Single master configuration file
 
