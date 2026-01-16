@@ -36,9 +36,7 @@ Repository: https://github.com/bmhoan/IPIAbDiscov
 
 
 # Package installtion
-
-download abodydiscov from ipi githup
-
+download abodydiscov from ipi githup:  git clone https://github.com/bmhoan/IPIAbDiscov.git
 #install requirements
 pip install -r requirements.txt
 
