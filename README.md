@@ -36,23 +36,35 @@ Repository: https://github.com/bmhoan/IPIAbDiscov
 
 
 # Package installtion
-download abodydiscov from ipi githup:  git clone https://github.com/bmhoan/IPIAbDiscov.git
+
+#download abodydiscov from ipi githup:  
+
+git clone https://github.com/bmhoan/IPIAbDiscov.git
+
 #install requirements
+
 pip install -r requirements.txt
 
 #fastp instalation
+
 conda install -c bioconda fastp
 
 #anarci installation
+
 https://github.com/oxpig/ANARCI.git
+
 conda install -c conda-forge biopython -y
+
 conda install -c bioconda hmmer=3.3.2 -y
+
 cd ANARCI
+
 python setup.py install
 
 # How To Use AbodyDiscov
 
 #1) run step by step
+
 cd abodydiscov
 
 python __main__.py process \
@@ -67,6 +79,9 @@ python  __main__.py  pick-leads --folder Miseq104/results
 python  __main__.py check-repeats --folder Miseq104/results
 
 python  __main__.py generate-plots --folder Miseq104/results
+
+python  __main__.py ml-prediction --folder Miseq104/results
+
 
 #2)- run full pipeline with all steps
 
