@@ -96,15 +96,13 @@ current_library: "standard_fab"   # ← CHANGE THIS LINE
 
 general:
 
-  base_dir: "/My/AbodyDiscov"
+    base_dir: "/My/AbodyDiscov"
   
-  fastp_path: "/opt/anaconda3/bin/fastp"
+    fastp_path: "/opt/anaconda3/bin/fastp"
   
-  mafft_path: "/opt/anaconda3/bin/mafft"
+    previous_antibodies_db: "/Users/Hoan.Nguyen/ComBio/AbodyDiscov/data/All_mAb_20251106_FACS_BLI.xlsx"
   
-  previous_antibodies_db: "/Users/Hoan.Nguyen/ComBio/AbodyDiscov/data/All_mAb_20251106_FACS_BLI.xlsx"
-  
-  output_folder: "results"
+    output_folder: "results"
 
 # My pipeline configuration for IPI VHH pipeline
 
@@ -114,14 +112,12 @@ current_library: "vhh_full"   # ← CHANGE THIS LINE
 
 general:
 
-  base_dir: "/My/AbodyDiscov"
+    base_dir: "/My/AbodyDiscov"
   
-  fastp_path: "/opt/anaconda3/bin/fastp"
+    fastp_path: "/opt/anaconda3/bin/fastp"
   
-  mafft_path: "/opt/anaconda3/bin/mafft"
+    previous_antibodies_db: "/Users/Hoan.Nguyen/ComBio/AbodyDiscov/data/All_mAb_20251106_FACS_BLI.xlsx"
   
-  previous_antibodies_db: "/Users/Hoan.Nguyen/ComBio/AbodyDiscov/data/All_mAb_20251106_FACS_BLI.xlsx"
-  
-  output_folder: "results"
+    output_folder: "results"
   
 #contact {Hoan.Nguyen, Andre.Teixeira}@proteininnovation.org}
