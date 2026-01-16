@@ -77,13 +77,15 @@ python  __main__.py generate-plots --folder Miseq104/results
 python __main__.py run-all --config config.yaml --sample-sheet Miseq88_samplesheet.xlsx --fastq-folder /NGS_20240912_MiSeq88/Fastq
 
 
-# My pipeline configuration
-#config.yaml - Single master configuration file
+# My pipeline configuration for IPI Standard fab pipeline
+
+#config.yaml - pipeline configuration file
 
 current_library: "standard_fab"   # ← CHANGE THIS LINE
 
 general:
-  base_dir: "/Users/Hoan.Nguyen/ComBio/AbodyDiscov"
+
+  base_dir: "/My/AbodyDiscov"
   
   fastp_path: "/opt/anaconda3/bin/fastp"
   
@@ -93,209 +95,22 @@ general:
   
   output_folder: "results"
 
+# My pipeline configuration for IPI VHH pipeline
 
-libraries:
+#config.yaml - pipeline configuration file
 
-  standard_fab:
-  
-    vh_barcodes:
-    
-      VHH-IPI-101: "TGTGCCATTTCGGGTTCCGGTGGTAGCACCTAC"
-      
-      H1-69: "GGTGGTATTATTCCAATTTTTGGTACTGCTAAT"
-      
-      H3-23_A: "TCTTATATATCTTCATCTGGTTCTACTATTTAT"
-      
-      H5-51: "GGTATAATCTACCCCGGTGATTCTGATACTAGA"
-      
-      H3-7_A: "GCTAATATCAAACAAGAAGGTTCTGAAAAGTAT"
-      
-      H4-34: "GGTGAAATCAATCACTCTGGTTCCACCAAC"
-      
-      Scaffold16: "CGTCAGGCACCGGGTAAAGAACGTGAATTAGTCAGCGCC"
-      
-      VOB: "AGACAAGCTCCAGGTAAGGGTCGTGAATTAGTTGCCGGT"
-      
-      VH_BLAM: "TACAGACAAGCTCCAGGTAAGGGTCGTGAATTAGTTGCCGGT"
-      
-    vl_barcodes:
-    
-      K1-39: "GTCACGGTATCC"
-      
-      K3-15: "GTGACAGTCTCG"
-      
-      K4-1: "GTAACCGTGTCA"
-      
-      K3-20: "GTTACTGTTTCTTCTGCATCTACT"
-      
-    vh_barcode_region: [0, -1]
-    
-    vl_barcode_region: [-70, -1]
+current_library: "vhh_full"   # ← CHANGE THIS LINE
 
+general:
 
-  vhh_full:
+  base_dir: "/My/AbodyDiscov"
   
-    vh_barcodes:
-    
-      VHH-IPI-101: "TGTGCCATTTCGGGTTCCGGTGGTAGCACCTAC"
-      
-      H1-69: "GGTGGTATTATTCCAATTTTTGGTACTGCTAAT"
-      
-      H1-46: "GGTATTATCAAACCATCTGGTGGTTCTACTTCT"
-      
-      H3-23_A: "TCTTATATATCTTCATCTGGTTCTACTATTTAT"
-      
-      H5-51: "GGTATAATCTACCCCGGTGATTCTGATACTAGA"
-      
-      H5-51_A: "GGTATAATCTACCCCGGTTATTCTGATACTAGA"
-      
-      H3-15: "GGTCGTATTAAGAGTAAAACCGATGGTGGTACTACTGAT"
-      
-      H3-7_A: "GCTAATATCAAACAAGAAGGTTCTGAAAAGTAT"
-      
-      H4-34: "GGTGAAATCAATCACTCTGGTTCCACCAAC"
-      
-      H4-39: "GGTTCTATATACTATTCTGGTTCAACTTAT"
-      
-      DEEPASH: "ACTCGCGGCTCAACCCGCAATGGCC"
-      
-      DEEPASH-R: "AACAACTTTCAACAGTTTCGGCACC"
-      
-      Scaffold16: "CGTCAGGCACCGGGTAAAGAACGTGAATTAGTCAGCGCC"
-      
-      VOB: "AGACAAGCTCCAGGTAAGGGTCGTGAATTAGTTGCCGGT"
-      
-      VH_BLAM: "TACAGACAAGCTCCAGGTAAGGGTCGTGAATTAGTTGCCGGT"
-      
-    vl_barcodes:
-    
-      K1-39: "GTCACGGTATCC"
-      
-      K3-15: "GTGACAGTCTCG"
-      
-      K4-1_C: "GTAACCGTGTCA"
-      
-      K3-20: "GTTACTGTTTCTTCTGCATCTACT"
-      
-    vh_barcode_region: [0, -1]
-    
-    vl_barcode_region: [0, -1]
-
-processing:
-
-  yyc_nt:
+  fastp_path: "/opt/anaconda3/bin/fastp"
   
-    - "TACTACTGC"
-    
-    - "TATTACTGC"
-    
-  wgq_nt:
+  mafft_path: "/opt/anaconda3/bin/mafft"
   
-    - "TGGGGACAA"
-
-  hcdr3_min_len: 1
+  previous_antibodies_db: "/Users/Hoan.Nguyen/ComBio/AbodyDiscov/data/All_mAb_20251106_FACS_BLI.xlsx"
   
-  hcdr3_max_len: 30
-  
-  read_count_min: 1
-  
-  read_freq_min: 0.0000001   
-
-  filters_include: []       
-  
-  filters_exclude: []        
-  skip_processed: false
-
-combine:   
-
-  #Columns used for grouping in pivot table
-  
-  pivot_cols:
-  
-    - "cdr3_aa"
-    
-    - "vh_scaffold"
-    
-    - "vl_scaffold"
-    
-    - "cdr3_functional"
-    
-
-  #Name of the CDR3 column (used for liabilities, clustering, length filtering)
-  
-  cdr3_col: "cdr3_aa"
-
-  #Filtering thresholds
-  
-  min_cdr3_len: 6
-  
-  max_cdr3_len: 30
-  
-  min_freq: 0.0001
-  
-  min_count: 5
-  
-  min_freq_sum: 0.0001
-  
-  min_reads_per_round: 5000
-  
-  remove_non_functional: true
-
-  #Critical liabilities for rank adjustment
-  
-
-
-pick_leads:
-
-  min_freq_first: 0.005
-  
-  min_freq_sum: 0.0005
-  
-  min_freq_table: 0.0001
-  
-  n_leads: 10000000
-  
-  critical_filtering: false
-  
-  priority_concentrations:
-  
-    - "4nM"
-    
-    - "20nM"
-    
-    - "100nM"
-    
-  dont_order_antigens: []
-
-repeat_check:
-
-  blosum_threshold: 0.8
-  
-  max_cdr3_len_blosum: 25
-  
-  n_workers: 8
-
-fastp:
-
-  qualified_quality_phred: 25
-  
-  unqualified_percent_limit: 20
-  
-  length_required: 50
-  
-  n_base_limit: 5
-  
-  correction: true
-  
-  overlap_len_require: 50
-  
-  overlap_diff_limit: 5
-  
-  thread: 8
-  
-  disable_adapter_trimming: true
-  
-  disable_trim_poly_g: true
-
+  output_folder: "results"
   
 #contact {Hoan.Nguyen, Andre.Teixeira}@proteininnovation.org}
