@@ -1,3 +1,4 @@
+weasyprint
 pandas
 biopython
 openpyxl

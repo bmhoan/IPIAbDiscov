@@ -10,10 +10,10 @@ current_library: "standard_fab"   # ← CHANGE THIS LINE
 # set previous_antibodies_db to the path of the previous antibodies database file (download from Haisun shared folder)
 
 general:
-  base_dir: "/Users/Hoan.Nguyen/ComBio/AbodyDisco"
-  fastp_path: "/opt/anaconda3/bin/fastp"
-  mafft_path: "/opt/anaconda3/bin/mafft"
-  previous_antibodies_db: "/Users/Hoan.Nguyen/ComBio/AbodyDisco/data/All_mAb_20251106_FACS_BLI.xlsx"
+  base_dir: "/alphafold/combio/software/IPIAbDiscov"
+  fastp_path: "/usr/local/lib/NGS_pipeline/annaconda3/bin/fastp"
+  mafft_path: "/usr/local/lib/NGS_pipeline/annaconda3/bin/mafft"
+  previous_antibodies_db: "/alphafold/combio/software/IPIAbDiscov//data/All_mAb_20251106_FACS_BLI.xlsx"
   output_folder: "results"
 
 
@@ -112,7 +112,7 @@ combine:
   min_count: 5
   min_freq_sum: 0.0001
   min_reads_per_round: 5000
-  remove_non_functional: true
+  remove_non_functional: yes
 
   # Critical liabilities for rank adjustment
   critical_liabilities:
@@ -130,7 +130,7 @@ combine:
   greedy_cutoff: 0.85
 
   # Output
-  top_leads_per_target: 10000
+  top_leads_per_target: 1000000
 
 pick_leads:
   min_freq_first: 0.005
