@@ -22,7 +22,7 @@ Developability Assessment: Built-in filters for liabilities (e.g., glycosylation
 
 
 
-Advanced Visualization: Interactive plots for repertoire diversity (e.g., Shannon entropy, clonal frequency distributions), enrichment heatmaps across selection rounds, sequence logos for CDR regions, and pairwise similarity networks.
+Data Visualization: CDR3 diversity (e.g., Shannon entropy, clonal frequency distributions), Rarefaction curve for checking sequencing depth
 
 Fold Change and Enrichment Analysis: Statistical computation of log-fold changes between pre- and post-selection rounds, with significance testing to highlight antigen-specific binders.
 
