@@ -2,11 +2,19 @@
 """
 Step 2: Combine per-sample tables per target
 Now includes exact repeat checking from previous antibodies DB
+Updated:
+- Filenames use .csv (no gzip compression)
+- Block number automatically detected:
+  - If already in the common prefix (target), preserved
+  - Else, if all samples share the same BlockXXX in their sample part (after __), add it as _BlockXXX
+- Dynamic greedy cluster column and filename
+- Greedy representatives saved
 """
 
 import pandas as pd
 from pathlib import Path
 from collections import defaultdict
+import re  # Added for block detection
 from utilities.clustering import greedy_clustering_by_levenshtein
 from utilities.liabilities import annotate_liabilities
 
@@ -22,7 +30,6 @@ def load_previous_db(db_path: Path) -> tuple[set, set, set]:
     df['CDR3'] = df['CDR3'].str[1:]
     df['heavy'] = df['heavy'].str[1:]
     df['light'] = df['light'].str[1:]
- 
 
     df.rename(columns={"CDR3": "cdr3_aa", "heavy": "vh_scaffold", "light": "vl_scaffold"}, inplace=True)
     cdr3_set = set(df["cdr3_aa"])
@@ -48,7 +55,7 @@ def run_combination(cfg, folder: Path):
     min_reads = c["min_reads_per_round"]
     remove_non_func = c["remove_non_functional"]
     critical = c["critical_liabilities"]
-    greedy_cutoff = c["greedy_cutoff"]
+    greedy_cutoff = c["greedy_cutoff"]  # e.g., 0.85
 
     # Load previous antibodies for exact repeat flags
     prev_db = cfg["general"]["previous_antibodies_db"]
@@ -62,11 +69,35 @@ def run_combination(cfg, folder: Path):
 
     target_to_files = defaultdict(list)
     for f in files:
-        target = f.stem.split("__")[0]
+        target = f.stem.split("__")[0]  # Common prefix before sample separator
         target_to_files[target].append(f)
 
     for target, file_list in target_to_files.items():
         print(f"\n=== Combining target: {target} ({len(file_list)} samples) ===")
+
+        # Detect block number
+        target_name = target
+
+        # Case 1: Block already in common prefix → keep as is
+        if re.search(r'_Block\d+', target):
+            print(f"   → Block detected in prefix: {target_name}")
+
+        # Case 2: Block not in prefix → look for common BlockXXX in sample parts (after __)
+        else:
+            sample_blocks = []
+            for f in file_list:
+                if "__" in f.stem:
+                    sample_part = f.stem.split("__")[1]
+                    match = re.search(r'Block(\d+)', sample_part, re.IGNORECASE)
+                    if match:
+                        sample_blocks.append(match.group(1))
+
+            if sample_blocks and len(set(sample_blocks)) == 1:
+                block_num = sample_blocks[0]
+                target_name = f"{target}_Block{block_num}"
+                print(f"   → Detected common Block{block_num} in sample names → using: {target_name}")
+            else:
+                print(f"   → No block detected → using: {target_name}")
 
         dfs = []
         for f in file_list:
@@ -90,7 +121,6 @@ def run_combination(cfg, folder: Path):
         # Remove non-functional
         if remove_non_func:
             df = df[df["cdr3_functional"]]
-
 
         # Pivot
         p = df.pivot_table(
@@ -133,8 +163,10 @@ def run_combination(cfg, folder: Path):
         # Re-list
         freq_cols = [c for c in p.columns if c.startswith("freq ")]
 
-        # Greedy clustering
-        p["greedy_cluster_0.85"] = greedy_clustering_by_levenshtein(p[cdr3_col].tolist(), greedy_cutoff)
+        # Greedy clustering (dynamic column name)
+        greedy_percent = int(round(greedy_cutoff * 100))
+        cluster_col = f"greedy_cluster_{greedy_percent}"
+        p[cluster_col] = greedy_clustering_by_levenshtein(p[cdr3_col].tolist(), greedy_cutoff)
 
         # Ranking
         p.sort_values(freq_cols[::-1], ascending=False, inplace=True)
@@ -145,7 +177,7 @@ def run_combination(cfg, folder: Path):
         p["rank_adjusted"] = p.apply(lambda r: 1e6 if r["critical"] else r["rank"], axis=1)
         p.sort_values(["rank_adjusted", "rank"], inplace=True)
 
-        # === Exact repeat flags — AFTER pivot (fast & efficient) ===
+        # === Exact repeat flags ===
         if cdr3_prev:
             p["cdr3_repeat"] = p[cdr3_col].isin(cdr3_prev)
             p["vh_repeat"] = (p["vh_scaffold"] + "|" + p[cdr3_col]).isin(vh_prev)
@@ -156,15 +188,23 @@ def run_combination(cfg, folder: Path):
             p["ab_repeat"] = False
 
         # Save clones
-        clones_out = folder / f"{target}_clones.csv.gz"
-        p.to_csv(clones_out, index=False, compression="gzip")
+        clones_out = folder / f"{target_name}_clones.csv"
+        p.to_csv(clones_out, index=False)
         print(f"Saved: {clones_out.name} ({len(p)} clones)")
-        
+
+        # Save leads
         p["max_freq_sum"] = p[freq_cols].sum(axis=1)
         leads = p[p["max_freq_sum"] >= min_freq_sum]
         leads = leads.sort_values(["rank_adjusted", "rank"])
-        leads_out = folder / f"{target}_leads.csv.gz"
-        leads.to_csv(leads_out, index=False, compression="gzip")
+        leads_out = folder / f"{target_name}_leads.csv"
+        leads.to_csv(leads_out, index=False)
         print(f"Saved: {leads_out.name} ({len(leads)} leads)")
 
-    print("\nStep 2 complete! Exact repeat flags (cdr3_repeat, vh_repeat, ab_repeat) added.")
+        # Save greedy representatives
+        reps = p.loc[p.groupby(cluster_col)["rank"].idxmin()]
+        reps = reps.sort_values("rank")
+        greedy_out = folder / f"{target_name}_greedy_{greedy_percent}.csv"
+        reps.to_csv(greedy_out, index=False)
+        print(f"Saved: {greedy_out.name} ({len(reps)} greedy representatives at {greedy_percent}% similarity)")
+
+    print("\nStep 2 complete!")

@@ -25,11 +25,11 @@ def run_pick_leads(cfg, folder: Path):
 
     # Negative control files 
     negative_tables = {
-        "Biotin-90N_1": "/Users/Hoan.Nguyen/ComBio/AbodyDisco/data/Biotin-90N_Strep_Biotin_HCDR3.txt",
-        "Biotin-90N_2": "/Users/Hoan.Nguyen/ComBio/AbodyDisco/data/Biotin-90N_Strep_HCDR3.txt",
-        "hIgG1_Fc": "/Users/Hoan.Nguyen/ComBio/AbodyDisco/data/HIS-AVI-hIgG1_Fc_pk1_HCDR3.txt",
-        "PSR_reagent": "/Users/Hoan.Nguyen/ComBio/AbodyDisco/data/PSR_reagent_HCDR3.txt",
-        "Streptavidin": "/Users/Hoan.Nguyen/ComBio/AbodyDisco/data/Streptavidin_beads_HCDR3.txt",
+        "Biotin-90N_1": "/alphafold/combio/software/IPIAbDiscov/data/Biotin-90N_Strep_Biotin_HCDR3.txt",
+        "Biotin-90N_2": "/alphafold/combio/software/IPIAbDiscov/data/Biotin-90N_Strep_HCDR3.txt",
+        "hIgG1_Fc": "/alphafold/combio/software/IPIAbDiscov/data/HIS-AVI-hIgG1_Fc_pk1_HCDR3.txt",
+        "PSR_reagent": "/alphafold/combio/software/IPIAbDiscov/data/PSR_reagent_HCDR3.txt",
+        "Streptavidin": "/alphafold/combio/software/IPIAbDiscov/data/Streptavidin_beads_HCDR3.txt",
     }
 
     # Load negative controls
@@ -52,7 +52,7 @@ def run_pick_leads(cfg, folder: Path):
         print(f"Loaded {len(old_cdr3)} previous CDR3s for repeat removal")
 
     # Load all clones files
-    clone_files = list(folder.glob("*_clones.csv.gz"))
+    clone_files = list(folder.glob("*_clones.csv"))
 
     if not clone_files:
         print("No _clones.csv.gz files found — Step 3 skipped.")
@@ -103,12 +103,12 @@ def run_pick_leads(cfg, folder: Path):
             (leads["sum_freq"] >= min_freq_sum)
         ]
 
-    # === YOUR ORIGINAL LOW-FREQUENCY FILTERING ===
+    # === ORIGINAL LOW-FREQUENCY FILTERING ===
     print(f"Before low-freq filter: {len(leads)} clones")
     leads = leads[leads["max_freq"] >= min_freq_table]
     print(f"After low-freq filter (max_freq >= {min_freq_table}): {len(leads)} clones")
 
-    # === YOUR ORIGINAL CROSS-CONTAMINATION DEDUP ===
+    # === ORIGINAL CROSS-CONTAMINATION DEDUP ===
     print(f"Before cross-contamination removal: {len(leads)} clones")
 
     leads.sort_values("max_freq", ascending=False, inplace=True)
@@ -121,7 +121,7 @@ def run_pick_leads(cfg, folder: Path):
     leads = leads.drop_duplicates(subset=["cdr3_aa"], keep="first")
     print(f"After CDR3 dedup: {len(leads)} clones (removed {before - len(leads)})")
 
-    # === YOUR ORIGINAL NEGATIVE CONTROL ANALYSIS ===
+    # === ORIGINAL NEGATIVE CONTROL ANALYSIS ===
     leads["negative"] = ""
     for name, seqs in negative_sets.items():
         leads["negative"] = leads[["cdr3_aa", "negative"]].apply(
@@ -175,7 +175,7 @@ def run_pick_leads(cfg, folder: Path):
     for target, valid_cdr3_set in leads_by_target.items():
         print(f"\nProcessing target: {target} ({len(valid_cdr3_set)} leads)")
         target= target.replace(".csv", "")
-        clones_file = folder / f"{target}_clones.csv.gz"
+        clones_file = folder / f"{target}_clones.csv"
         if not clones_file.exists():
             print(f"  Warning: {clones_file.name} not found — skipping")
             continue
@@ -200,9 +200,17 @@ def run_pick_leads(cfg, folder: Path):
 
         # === Concentration ratios ===
         freq_cols = [col for col in df.columns if col.startswith("freq ")]
+        freq_2 = [col for col in freq_cols if "2uM" in col]
         freq_4 = [col for col in freq_cols if "4nM" in col]
         freq_20 = [col for col in freq_cols if "20nM" in col]
         freq_100 = [col for col in freq_cols if "100nM" in col]
+
+        if freq_2 and freq_20:
+            df["ratio_2uM_20nM"] = df[freq_2[0]] / (df[freq_20[0]] + 1e-8)  # avoid div by zero
+        if freq_2 and freq_4:
+            df["ratio_2uM_4nM"] = df[freq_2[0]] / (df[freq_4[0]] + 1e-8)  # avoid div by zero
+        if freq_2 and freq_100:
+            df["ratio_2uM_100nM"] = df[freq_2[0]] / (df[freq_100[0]] + 1e-8)  # avoid div by zero
 
         if freq_4 and freq_20:
             df["ratio_4nM_20nM"] = df[freq_4[0]] / (df[freq_20[0]] + 1e-8)  # avoid div by zero
@@ -229,9 +237,10 @@ def run_pick_leads(cfg, folder: Path):
     lead_keys = set(zip(leads["cdr3_aa"], leads["vh_scaffold"], leads["vl_scaffold"]))
 
     # Process each clones file
-    clone_files = list(folder.glob("*_clones.csv.gz"))
+    clone_files = list(folder.glob("*_clones.csv"))
 
     for f in clone_files:
+        print(f)
         target = f.stem.replace("_clones", "")
         print(f"\nProcessing target: {target}")
 
@@ -253,12 +262,19 @@ def run_pick_leads(cfg, folder: Path):
 
         # === Concentration ratios ===
         freq_cols = [col for col in df.columns if col.startswith("freq ")]
+        freq_2 = [col for col in freq_cols if "2uM" in col]
         freq_4 = [col for col in freq_cols if "4nM" in col]
         freq_20 = [col for col in freq_cols if "20nM" in col]
         freq_100 = [col for col in freq_cols if "100nM" in col]
 
         if freq_4 and freq_20:
             df["ratio_4nM_20nM"] = df[freq_4[0]] / (df[freq_20[0]] + 1e-8)  # avoid div by zero
+        if freq_2 and freq_20:
+            df["ratio_2uM_20nM"] = df[freq_2[0]] / (df[freq_20[0]] + 1e-8)  # avoid div by zero
+        if freq_2 and freq_4:
+            df["ratio_2uM_4nM"] = df[freq_2[0]] / (df[freq_4[0]] + 1e-8)  # avoid div by zero
+        if freq_2 and freq_100:
+            df["ratio_2uM_100nM"] = df[freq_2[0]] / (df[freq_100[0]] + 1e-8)  # avoid div by zero
         if freq_20 and freq_100:
             df["ratio_20nM_100nM"] = df[freq_20[0]] / (df[freq_100[0]] + 1e-8)
         if freq_4 and freq_100:
@@ -266,6 +282,6 @@ def run_pick_leads(cfg, folder: Path):
 
 
         # Save back (overwrite with LEAD column)
-        df.to_csv(f, index=False, compression="gzip")
+        df.to_csv(f, index=False)
 
     print("\nStep 3 complete! LEAD = True added to all _clones.csv.gz files")

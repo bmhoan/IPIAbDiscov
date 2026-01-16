@@ -5,6 +5,7 @@ All scientific logic, columns, and stats preserved exactly.
 Fully configurable via YAML with library switching.
 """
 
+import os
 import sys
 import subprocess
 import json
@@ -253,7 +254,7 @@ def find_vh_vl(df: pd.DataFrame, vh_barcodes: dict, vl_barcodes: dict = None):
 
 def get_full_anarci_anno(df: pd.DataFrame) -> pd.DataFrame:
     def get_ANARCI(seq: str):
-        if len(seq) <= 100:
+        if len(seq) <= 50:
             return "Not Fully Annotated||||||"
         try:
             chain = Chain(seq, scheme="imgt")
@@ -467,7 +468,9 @@ def run_processing(cfg_in, sample_sheet: Path, fastq_folder: Path, output_folder
 
         # Save
         out_file = output_dir / f"{name}_{row['block']}.csv.gz"
-        out_raw = output_dir / f"{name}_{row['block']}_raw.csv.gz"
+        os.makedirs(f"{output_dir}/raw", exist_ok=True)
+        out_raw = f"{output_dir}/raw/{name}_{row['block']}_raw.csv.gz"
+
         out_file.parent.mkdir(parents=True, exist_ok=True)
         print(out_file)
         df.to_csv(out_file, index=False, compression="gzip")
