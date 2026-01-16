@@ -1,5 +1,5 @@
 
-# IPIAbDiscov: A Python Package, developped at IPI, for NGS-Based Antibody Discovery
+# IPIAbDiscov: A Python Package, developped at IPI, for NGS-Based Antibody Discovery (Antibodies and VHH)
 IPIAbDiscov is an open-source Python package designed to streamline the analysis of Next-Generation Sequencing (NGS) data from antibody display technologies, such as phage display or yeast display libraries. It provides a command-line interface for processing raw FASTQ files from antibody selection campaigns, enabling researchers to quantify sequence abundance, track enrichment across selection rounds, and identify promising lead candidates for therapeutic antibody development.
 
 IPIAbDiscov allow to accelerate the transition from huge amount of NGS data to validated antibody leads, reducing reliance on traditional low-throughput screening while uncovering rare, high-potential clones often missed in conventional pipelines. Ideal for academic and biotech researchers in antibody discovery engineering.
@@ -66,8 +66,10 @@ python  __main__.py  pick-leads --folder Miseq104/results
 
 python  __main__.py check-repeats --folder Miseq104/results
 
+python  __main__.py generate-plots --folder Miseq104/results
 
 #run full pipeline with all steps
+
 python __main__.py run-all --config config.yaml --sample-sheet Miseq88_samplesheet.xlsx --fastq-folder /NGS_20240912_MiSeq88/Fastq
 
 
