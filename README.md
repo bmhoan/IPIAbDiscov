@@ -27,8 +27,6 @@ Data Visualization: CDR3 diversity (e.g., Shannon entropy, clonal frequency dist
 Fold Change and Enrichment Analysis: Statistical computation of log-fold changes between pre- and post-selection rounds, with significance testing to highlight antigen-specific binders.
 
 
-To further empower antibody discovery workflows, future versions could include:
-
 Machine Learning Integration: Predictive models for affinity or developability scoring, clustering of related sequences (e.g., lineage grouping), or epitope binning using sequence features.
 
 
