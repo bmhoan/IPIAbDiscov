@@ -479,54 +479,92 @@ def run_processing(cfg_in, sample_sheet: Path, fastq_folder: Path, output_folder
         per_sample_files.append(out_file)
 
     # === Prevalence + contamination ===
-    print("\nCalculating cross-target VH-CDR3 prevalence...")
-    pair_to_targets = defaultdict(set)
 
-    for f in per_sample_files:
-        try:
-            df = pd.read_csv(f)
-            if "antigen" not in df.columns:
-                continue
-            target = df["antigen"].iloc[0]
-            pairs = set(zip(df["vh_scaffold"], df["cdr3_aa"]))
-            for p in pairs:
-                pair_to_targets[p].add(target)
-        except Exception as e:
-            print(f"Warning reading {f}: {e}")
+    # === NEW: Cross-target VH-CDR3 contamination (updated logic) ===
+    print("\nCalculating cross-target VH-CDR3 contamination (excluding top-frequency target)...")
 
-    prevalent_rows = []
-    for pair, targets in pair_to_targets.items():
-        prevalent_rows.append({
-            "vh_scaffold": pair[0],
-            "cdr3_aa": pair[1],
-            "vh_cdr3": f"{pair[0]}-{pair[1]}",
-            "prevalent_targets": len(targets),
-            "targets_list": ";".join(sorted(targets))
-        })
-
-    prevalent_df = pd.DataFrame(prevalent_rows).sort_values("prevalent_targets", ascending=False)
-    prevalent_df.to_csv(output_dir / "vh_cdr3_prevalent.csv", index=False)
-
-    contaminant_pairs = {(r["vh_scaffold"], r["cdr3_aa"]) for _, r in prevalent_df.iterrows() if r["prevalent_targets"] > 1}
-    lookup = {(r["vh_scaffold"], r["cdr3_aa"]): r["prevalent_targets"] for _, r in prevalent_df.iterrows()}
-
-    print("Updating per-sample files with prevalence...")
+    data = []
     for f in per_sample_files:
         df = pd.read_csv(f)
-        df["prevalent_targets_vh_cdr3"] = df.apply(lambda r: lookup.get((r["vh_scaffold"], r["cdr3_aa"]), 0), axis=1)
+        if df.empty or "antigen" not in df.columns or "count" not in df.columns:
+            continue
+        sample_stem = f.stem
+        antigen = df["antigen"].iloc[0]
+        total_reads = df["count"].sum()
+        if total_reads == 0:
+            continue
+        sample_data = df[["vh_scaffold", "cdr3_aa", "count"]].copy()
+        sample_data["sample"] = sample_stem
+        sample_data["antigen"] = antigen
+        sample_data["freq"] = sample_data["count"] / total_reads
+        data.append(sample_data)
 
-        mask = df.apply(lambda r: (r["vh_scaffold"], r["cdr3_aa"]) in contaminant_pairs, axis=1)
-        sample_name = f.stem.rsplit("_", 1)[0]
-        n_clones = df[mask][["vh_scaffold", "cdr3_aa"]].drop_duplicates().shape[0]
-        n_reads = df[mask]["count"].sum() if "count" in df.columns else 0
-        total_reads = df["count"].sum() if "count" in df.columns else 1
-        pct = round(100 * n_reads / total_reads, 2) if total_reads > 0 else 0.0
+    if not data:
+        print("No data available for contamination calculation — skipping.")
+    else:
+        contam_df = pd.concat(data, ignore_index=True)
 
-        sample_qc_table.loc[sample_qc_table["name"] == sample_name, [
-            "n_cross_target_clones", "n_cross_target_reads", "pct_cross_target_reads"
-        ]] = [n_clones, n_reads, pct]
+        # Number of distinct antigens per VH-CDR3 pair
+        contam_df["num_antigens"] = contam_df.groupby(["vh_scaffold", "cdr3_aa"])["antigen"].transform("nunique")
 
-        df.to_csv(f, index=False)
+        # Max freq for this antigen (across its samples)
+        contam_df["antigen_max_freq"] = contam_df.groupby(["vh_scaffold", "cdr3_aa", "antigen"])["freq"].transform("max")
+
+        # Global max antigen freq for this pair
+        contam_df["global_max_freq"] = contam_df.groupby(["vh_scaffold", "cdr3_aa"])["antigen_max_freq"].transform("max")
+
+        # Flags
+        contam_df["prevalent_targets_vh_cdr3"] = contam_df["num_antigens"]
+        contam_df["contaminant_vh_cdr3"] = (contam_df["num_antigens"] > 1) & (contam_df["antigen_max_freq"] < contam_df["global_max_freq"])
+
+        # Per-sample contamination stats (only contaminant reads)
+        contam_group = contam_df[contam_df["contaminant_vh_cdr3"]]
+        if not contam_group.empty:
+            contam_stats = contam_group.groupby("sample").agg(
+                n_cross_target_clones=("cdr3_aa", "nunique"),  # unique contaminated VH-CDR3 pairs
+                n_cross_target_reads=("count", "sum")
+            ).reset_index()
+
+            sample_totals = contam_df.groupby("sample")["count"].sum().reset_index()
+            sample_totals.rename(columns={"count": "total_reads"}, inplace=True)
+
+            contam_stats = contam_stats.merge(sample_totals, on="sample")
+            contam_stats["pct_cross_target_reads"] = round(100 * contam_stats["n_cross_target_reads"] / contam_stats["total_reads"], 2)
+        else:
+            contam_stats = pd.DataFrame(columns=["sample", "n_cross_target_clones", "n_cross_target_reads", "total_reads", "pct_cross_target_reads"])
+
+        # Update sample_qc_table
+        for _, stat in contam_stats.iterrows():
+            # sample = {Description}_{block} → Description = name in qc table
+            sample_name = stat["sample"].rsplit("_", 1)[0]
+            sample_qc_table.loc[sample_qc_table["name"] == sample_name,
+                                ["n_cross_target_clones", "n_cross_target_reads", "pct_cross_target_reads"]
+            ] = [stat["n_cross_target_clones"], stat["n_cross_target_reads"], stat["pct_cross_target_reads"]]
+
+        # Samples with no contamination keep their original 0 values (already initialized)
+
+        # Add flags to per-sample files
+        flag_df = contam_df[["vh_scaffold", "cdr3_aa", "prevalent_targets_vh_cdr3", "contaminant_vh_cdr3"]].drop_duplicates()
+        for f in per_sample_files:
+            df = pd.read_csv(f)
+            df = df.merge(flag_df, on=["vh_scaffold", "cdr3_aa"], how="left")
+            df["prevalent_targets_vh_cdr3"] = df["prevalent_targets_vh_cdr3"].fillna(1).astype(int)
+            df["contaminant_vh_cdr3"] = df["contaminant_vh_cdr3"].fillna(False).astype(bool)
+            df.to_csv(f, index=False, compression="gzip")
+
+        # Global cross-target summary (replaces old vh_cdr3_prevalent.csv)
+        cross_stats = contam_df.groupby(["vh_scaffold", "cdr3_aa"]).agg(
+            prevalent_targets=("num_antigens", "first"),
+            global_max_freq=("global_max_freq", "first"),
+            targets_list=("antigen", lambda x: ";".join(sorted(set(x))))
+        ).reset_index()
+
+        cross_df = cross_stats[cross_stats["prevalent_targets"] > 1].sort_values("prevalent_targets", ascending=False)
+        cross_df["vh_cdr3"] = cross_df["vh_scaffold"] + "-" + cross_df["cdr3_aa"]
+        cross_df = cross_df[["vh_cdr3", "vh_scaffold", "cdr3_aa", "prevalent_targets", "targets_list", "global_max_freq"]]
+
+        cross_df.to_csv(output_dir / "vh_cdr3_prevalent.csv", index=False)
+        print(f"Saved global cross-target summary: {output_dir / 'vh_cdr3_prevalent.csv'} ({len(cross_df)} cross-target VH-CDR3 pairs)")
 
     sample_qc_table.to_csv(output_dir / "sample_qc_table.csv", index=False)
     print("\nStep 1 complete!")
