@@ -18,7 +18,7 @@ import re  # Added for block detection
 from utilities.clustering import greedy_clustering_by_levenshtein
 from utilities.liabilities import annotate_liabilities
 
-def load_previous_db(db_path: Path) -> tuple[set, set, set]:
+def load_previous_db_bk(db_path: Path) -> tuple[set, set, set]:
     """Load previous antibodies and create lookup sets"""
     if not db_path.exists():
         print("Previous antibodies DB not found — skipping repeat flags")
@@ -38,6 +38,46 @@ def load_previous_db(db_path: Path) -> tuple[set, set, set]:
 
     print(f"Loaded {len(df)} previous antibodies for exact repeat checking")
     return cdr3_set, vh_set, ab_set
+
+def load_previous_db(db_path: Path) -> tuple[set, set, set, dict, dict, dict, dict]:
+    """Load previous antibodies and create lookup sets + dicts for BARCODEs"""
+    if not db_path.exists():
+        print("Previous antibodies DB not found — skipping repeat flags")
+        empty_set = set()
+        empty_dict = {}
+        return empty_set, empty_set, empty_set, empty_dict, empty_dict, empty_dict
+
+    df = pd.read_excel(db_path)
+    
+    # Assume columns: "BARCODE", "CDR3", "heavy", "light" (adjust if different)
+    df = df[["BARCODE", "CDR3", "heavy", "light","antigen"]].dropna()
+    #df = df[["CDR3", "heavy", "light"]].dropna()
+    df['CDR3'] = df['CDR3'].str[1:]
+    df['heavy'] = df['heavy'].str[1:]
+    df['light'] = df['light'].str[1:]
+
+    #df['CDR3'] = df['CDR3'].str[1:] if df['CDR3'].str.startswith('C').all() else df['CDR3']  # optional strip "C"
+    #df['heavy'] = df['heavy'].str[1:] if df['heavy'].str.startswith('V').all() else df['heavy']
+    #df['light'] = df['light'].str[1:] if df['light'].str.startswith('V').all() else df['light']
+
+    # Sets for boolean flags
+    cdr3_set = set(df["CDR3"])
+    vh_set = set(df["heavy"] + "|" + df["CDR3"])
+    ab_set = set(df["heavy"] + "|" + df["light"] + "|" + df["CDR3"])
+
+    df.rename(columns={"CDR3": "cdr3_aa", "heavy": "vh_scaffold", "light": "vl_scaffold"}, inplace=True)
+    cdr3_set = set(df["cdr3_aa"])
+    vh_set = set(df["vh_scaffold"] + "|" + df["cdr3_aa"])
+    ab_set = set(df["vh_scaffold"] + "|" + df["vl_scaffold"] + "|" + df["cdr3_aa"])
+
+    # Dicts for BARCODE lists (sequence → ";" joined BARCODEs)
+    cdr3_dict = df.groupby("cdr3_aa")["BARCODE"].apply(lambda x: ";".join(x.astype(str))).to_dict()
+    vh_dict = df.groupby(df["vh_scaffold"] + "|" + df["cdr3_aa"])["BARCODE"].apply(lambda x: ";".join(x.astype(str))).to_dict()
+    ab_dict = df.groupby(df["vh_scaffold"] + "|" + df["vl_scaffold"] + "|" + df["cdr3_aa"])["BARCODE"].apply(lambda x: ";".join(x.astype(str))).to_dict()
+    ab_dict_ag = df.groupby(df["vh_scaffold"] + "|" + df["vl_scaffold"] + "|" + df["cdr3_aa"])["antigen"].apply(lambda x: ";".join(x.astype(str))).to_dict()
+
+    print(f"Loaded {len(df)} previous antibodies for repeat checking (with BARCODEs)")
+    return cdr3_set, vh_set, ab_set, cdr3_dict, vh_dict, ab_dict,ab_dict_ag
 
 def run_combination(cfg, folder: Path):
     folder = Path(folder)
@@ -59,8 +99,9 @@ def run_combination(cfg, folder: Path):
 
     # Load previous antibodies for exact repeat flags
     prev_db = cfg["general"]["previous_antibodies_db"]
-    cdr3_prev, vh_prev, ab_prev = load_previous_db(Path(prev_db))
-
+    #cdr3_prev, vh_prev, ab_prev = load_previous_db(Path(prev_db))
+    cdr3_prev, vh_prev, ab_prev, cdr3_barcode_dict, vh_barcode_dict, ab_barcode_dict,ab_ag_dict = load_previous_db(Path(prev_db))
+    
     files = list(folder.glob("*.csv.gz"))
 
     if not files:
@@ -177,7 +218,7 @@ def run_combination(cfg, folder: Path):
         p["rank_adjusted"] = p.apply(lambda r: 1e6 if r["critical"] else r["rank"], axis=1)
         p.sort_values(["rank_adjusted", "rank"], inplace=True)
 
-        # === Exact repeat flags ===
+        #=== Exact repeat flags ===
         if cdr3_prev:
             p["cdr3_repeat"] = p[cdr3_col].isin(cdr3_prev)
             p["vh_repeat"] = (p["vh_scaffold"] + "|" + p[cdr3_col]).isin(vh_prev)
@@ -187,6 +228,17 @@ def run_combination(cfg, folder: Path):
             p["vh_repeat"] = False
             p["ab_repeat"] = False
 
+
+        # === Exact repeat flags + BARCODEs ===
+        #p["cdr3_repeat"] = p[cdr3_col].isin(cdr3_prev)
+        #p["vh_repeat"] = (p["vh_scaffold"] + "|" + p[cdr3_col]).isin(vh_prev)
+        #p["ab_repeat"] = (p["vh_scaffold"] + "|" + p["vl_scaffold"] + "|" + p[cdr3_col]).isin(ab_prev)
+        
+        # NEW: BARCODE columns (string, ";" joined if multiple, empty if no match)
+        p["cdr3_repeat_barcode"] = p[cdr3_col].map(cdr3_barcode_dict).fillna("")
+        p["vh_repeat_barcode"] = (p["vh_scaffold"] + "|" + p[cdr3_col]).map(vh_barcode_dict).fillna("")
+        p["ab_repeat_barcode"] = (p["vh_scaffold"] + "|" + p["vl_scaffold"] + "|" + p[cdr3_col]).map(ab_barcode_dict).fillna("")
+        p["ab_repeat_antigen"] = (p["vh_scaffold"] + "|" + p["vl_scaffold"] + "|" + p[cdr3_col]).map(ab_ag_dict).fillna("")
         # Save clones
         clones_out = folder / f"{target_name}_clones.csv"
         p.to_csv(clones_out, index=False)

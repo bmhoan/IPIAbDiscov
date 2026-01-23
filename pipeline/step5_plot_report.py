@@ -43,6 +43,7 @@ def rarefaction_curve(counts, max_reads=150000, steps=100, iterations=10):
 
     return read_points, diversities
 
+
 def generate_rarefaction_plots(folder: Path):
     """Generate rarefaction curves from individual sample files (*.csv.gz)"""
     folder = Path(folder)
@@ -59,7 +60,8 @@ def generate_rarefaction_plots(folder: Path):
 
     sample_data = {}
     for f in sample_files:
-        sample_name = f.stem
+        # Clean sample name: remove .csv.gz and any leftover .csv
+        sample_name = f.name.replace('.csv.gz', '').replace('.csv', '')
         try:
             df = pd.read_csv(f)
             if "count" not in df.columns:
@@ -73,37 +75,64 @@ def generate_rarefaction_plots(folder: Path):
         print("No valid sample data for rarefaction")
         return
 
+    # Sort sample names alphabetically for consistent numbering
+    sorted_samples = sorted(sample_data.items(), key=lambda x: x[0])
+
     # === All samples ===
-    plt.figure(figsize=(12, 8))
-    for sample_name, counts in sample_data.items():
+    plt.figure(figsize=(16, 10))
+    for i, (sample_name, counts) in enumerate(sorted_samples, start=1):
         x, y = rarefaction_curve(counts)
-        plt.plot(x, y, label=sample_name[:30], alpha=0.7)
+        line, = plt.plot(x, y, alpha=0.8)
+        color = line.get_color()
+
+        # Legend label with number + clean name
+        plt.plot([], [], label=f"{i} - {sample_name}", color=color)
+
+        # Annotate number on curve
+        if len(x) > 10:
+            annot_x = x[int(0.9 * len(x))]
+            annot_y = y[int(0.9 * len(y))]
+            plt.text(annot_x, annot_y, str(i), fontsize=12, fontweight='bold',
+                     color=color, ha='right', va='bottom',
+                     bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
 
     plt.xlabel("Subsampled Reads")
     plt.ylabel("Unique CDR3 Sequences")
-    plt.title("Rarefaction Curves — All Samples")
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+    plt.title("Rarefaction Curves — All Samples\n(Numbers on curves and in legend correspond)")
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9, ncol=1)
     plt.tight_layout()
-    plt.savefig(plots_dir / "rarefaction_all_samples.png")
+    plt.savefig(plots_dir / "rarefaction_all_samples.png", dpi=200)
     plt.close()
 
     # === Only 100nM samples ===
-    nM100_samples = {k: v for k, v in sample_data.items() if "100nM" in k}
+    nM100_samples = {k: v for k, v in sample_data.items() if "100nM" in k or "100 nM" in k}
     if nM100_samples:
-        plt.figure(figsize=(12, 8))
-        for sample_name, counts in nM100_samples.items():
+        sorted_100nM = sorted(nM100_samples.items(), key=lambda x: x[0])
+        plt.figure(figsize=(16, 10))
+        for i, (sample_name, counts) in enumerate(sorted_100nM, start=1):
             x, y = rarefaction_curve(counts)
-            plt.plot(x, y, label=sample_name[:30], alpha=0.7)
+            line, = plt.plot(x, y, alpha=0.8)
+            color = line.get_color()
+
+            plt.plot([], [], label=f"{i} - {sample_name}", color=color)
+
+            if len(x) > 10:
+                annot_x = x[int(0.9 * len(x))]
+                annot_y = y[int(0.9 * len(y))]
+                plt.text(annot_x, annot_y, str(i), fontsize=12, fontweight='bold',
+                         color=color, ha='right', va='bottom',
+                         bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
 
         plt.xlabel("Subsampled Reads")
         plt.ylabel("Unique CDR3 Sequences")
-        plt.title("Rarefaction Curves — 100nM Samples Only")
-        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+        plt.title("Rarefaction Curves — 100nM Samples Only\n(Numbers on curves and in legend correspond)")
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9, ncol=1)
         plt.tight_layout()
-        plt.savefig(plots_dir / "rarefaction_100nM_samples.png")
+        plt.savefig(plots_dir / "rarefaction_100nM_samples.png", dpi=200)
         plt.close()
 
-    print("Rarefaction curves generated (all samples + 100nM only)")
+    print("Rarefaction curves generated with numbered labels, curve annotations, and clean sample names (no .csv)")
+
 
 def make_plots(folder: Path):
     folder = Path(folder)
@@ -121,6 +150,15 @@ def make_plots(folder: Path):
 
     qc = pd.read_csv(qc_path)
 
+
+    # Load vh_cdr3_prevalent for top prevalent table
+    prevalent_path = folder / "vh_cdr3_prevalent.csv"
+    prevalent_df = pd.DataFrame()
+    if prevalent_path.exists():
+        prevalent_df = pd.read_csv(prevalent_path)
+        prevalent_df = prevalent_df.sort_values("prevalent_targets", ascending=False).head(50)
+        print(f"Loaded {len(prevalent_df)} prevalent VH-CDR3 pairs for table")
+
     # Generate rarefaction curves
     generate_rarefaction_plots(folder)
 
@@ -133,16 +171,24 @@ def make_plots(folder: Path):
         <style>
             body {{ font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; background: #f9f9f9; }}
             h1, h2 {{ color: #2c3e50; text-align: center; }}
-            .container {{ max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }}
+            .container {{ max-width: 1400px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }}
             .plot {{ text-align: center; margin: 50px 0; page-break-inside: avoid; }}
             img {{ max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; }}
             .caption {{ font-style: italic; margin-top: 10px; color: #555; }}
             .footer {{ text-align: center; margin-top: 50px; color: #888; font-size: 0.9em; }}
+
+            /* Optimized table styles */
+            .table-container {{ overflow-x: auto; margin: 20px 0; }}
+            table {{ font-size: 11px; width: 100%; border-collapse: collapse; table-layout: auto; }}
+            table th, table td {{ padding: 8px; text-align: left; border: 1px solid #ddd; word-wrap: break-word; max-width: 250px; vertical-align: top; }}
+            table th {{ background-color: #f2f2f2; font-weight: bold; }}
+            table tr:nth-child(even) {{ background-color: #f9f9f9; }}
         </style>
     </head>
     <body>
         <div class="container">
-            <h1>Institut For Protein Innovation: NGS Analysis for Antibody Discovery</h1>
+            <h1 style="margin: 0; font-size: 2.8em; font-weight: bold;">Institute For Protein Innovation</h1>
+            <h2 style="margin: 0; font-size: 1.8em; color: #444;">NGS Analysis for Antibody Discovery</h2>
             <p><strong>Miseq number:</strong> </p>
             <p><strong>Generated:</strong> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
             <p><strong>Results folder:</strong> {folder}</p>
@@ -186,6 +232,22 @@ def make_plots(folder: Path):
     html += f'<div class="plot"><h2>{plot_count}. Cross-Target Contamination</h2><img src="data:image/png;base64,{fig_to_base64(fig)}"><p class="caption">% of reads from cross-target VH-CDR3</p></div>'
     plt.close(fig)
 
+    # === 9. Top 50 Most Prevalent VH-CDR3 Pairs (optimized table) ===
+    if not prevalent_df.empty:
+        plot_count += 1
+
+        # Custom table HTML with wrapper for horizontal scroll
+        table_html = prevalent_df.to_html(index=False, escape=False, border=0)
+
+        optimized_table = f'''
+        <div class="table-container">
+            <h3>Top 50 Most Prevalent VH-CDR3 Pairs</h3>
+            {table_html}
+        </div>
+        '''
+
+        html += f'<div class="plot"><h2>{plot_count}. Top 50 Most Prevalent VH-CDR3 Pairs</h2>{optimized_table}</div>'
+    
     # === 3. Unique CDR3 by Antigen & Condition ===
     plot_count += 1
     fig, ax = plt.subplots()
@@ -218,19 +280,42 @@ def make_plots(folder: Path):
             html += f'<div class="plot"><h2>{plot_count}. Final Leads Distribution</h2><img src="data:image/png;base64,{fig_to_base64(fig)}"></div>'
             plt.close(fig)
 
-    # === 5-8. Diversity plots ===
-    for metric, suffix in [("shannon", ""), ("shannon_min2", "2"), ("inv_simpsons", ""), ("inv_simpsons_2", "2")]:
+    # === 5-8. Diversity plots (ordered rounds + non-numeric first) ===
+    for metric, suffix in [("shannon", ""), ("shannon_min2", "min2"), ("inv_simpsons", ""), ("inv_simpsons_2", "min2")]:
         if metric in qc.columns:
             plot_count += 1
-            fig, ax = plt.subplots()
-            n_conditions = qc["condition"].nunique()
+
+            qc_plot = qc.copy()
+
+            # Extract number; non-numeric → NaN
+            qc_plot["round_num"] = qc_plot["round"].str.extract(r'(\d+)').astype(float)
+
+            # Define preferred order for non-numeric rounds
+            non_numeric_order = ["Input", "Negative", "NA"]  # add more if needed
+            qc_plot["round_sort"] = qc_plot["round"].apply(
+                lambda x: non_numeric_order.index(x) if x in non_numeric_order else len(non_numeric_order) + qc_plot["round_num"].get(x, np.inf)
+            )
+
+            # Full order: non-numeric first, then numeric
+            round_order = (
+                qc_plot[qc_plot["round"].isin(non_numeric_order)]["round"].unique().tolist() +
+                sorted(qc_plot[~qc_plot["round"].isin(non_numeric_order)]["round"].unique(),
+                       key=lambda x: int(re.search(r'\d+', x).group()))
+            )
+
+            fig, ax = plt.subplots(figsize=(14, 8))
+            n_conditions = qc_plot["condition"].nunique()
             palette = sns.color_palette("tab20" if n_conditions > 10 else "tab10", n_conditions)
-            sns.boxplot(data=qc, x="round", y=metric, ax=ax)
-            sns.stripplot(data=qc, x="round", y=metric, hue="condition",
-                          palette=palette, jitter=True, alpha=0.9, ax=ax)
-            ax.set_title(f"{metric.replace('_', ' ').title()} Diversity by Round{suffix}")
-            ax.legend(title="Condition", bbox_to_anchor=(1.05, 1))
-            html += f'<div class="plot"><h2>{plot_count}. {metric.replace('_', ' ').title()} Diversity{suffix}</h2><img src="data:image/png;base64,{fig_to_base64(fig)}"></div>'
+
+            sns.boxplot(data=qc_plot, x="round", y=metric, order=round_order, ax=ax, color="lightgray")
+            sns.stripplot(data=qc_plot, x="round", y=metric, hue="condition",
+                          palette=palette, jitter=True, alpha=0.9, ax=ax, order=round_order)
+
+            ax.set_title(f"{metric.replace('_', ' ').title()} Diversity by Round {suffix}")
+            ax.legend(title="Condition", bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax.tick_params(axis='x', rotation=45)
+
+            html += f'<div class="plot"><h2>{plot_count}. {metric.replace("_", " ").title()} Diversity {suffix}</h2><img src="data:image/png;base64,{fig_to_base64(fig)}"></div>'
             plt.close(fig)
 
     # === Rarefaction curves ===
