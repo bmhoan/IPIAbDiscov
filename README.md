@@ -6,7 +6,7 @@ IPIAbDiscov allow to accelerate the transition from huge amount of NGS data to v
 
 # Key Features
 
-FASTQ Processing: Quality trimming, filtering, and annotation of antibody sequences using tools like fastp and ANARCI for accurate numbering and germline assignment of Fab or scFv fragments.
+FASTQ Processing: Quality trimming, filtering, paired-end read merging, and annotation of antibody sequences using tools like fastp and ANARCI for accurate numbering and germline assignment of Fab or scFv fragments.
 
 Data Aggregation: Combine results from multiple samples or rounds to generate comprehensive repertoire tables.
 
