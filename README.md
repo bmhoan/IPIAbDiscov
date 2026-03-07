@@ -22,60 +22,8 @@ By integrating rigorous multi-level quality control with advanced post-processin
 **Repository:** https://github.com/bmhoan/IPIAbDiscov  
 **Contact:** hoan.nguyen@proteininnovation.org
 
-# IPIAbDiscov
-
-**NGS-Based Bioinformatics Pipeline for Fab and VHH Antibody Discovery**
-
-### Abstract
-Next-generation sequencing (NGS) has transformed antibody discovery, but reliable insights require rigorous quality control at every step. IPIAbDiscov is an open-source Python pipeline developed at the Institute for Protein Innovation (IPI) that delivers **end-to-end NGS analysis** for phage- and yeast-display libraries.
-
-From raw FASTQ files to ranked therapeutic leads, it performs comprehensive QC (read quality, merging, annotation, contamination detection, diversity metrics), tracks clonal enrichment across rounds, and culminates in advanced post-processing with biophysical prediction (IPIAbDev), therapeutic profiling (TAP), structure-based scoring (AlphaFold3/Boltz2 iPTM), paratope mapping (ParaAntiProt + Paragraph), binding prediction (AntiBinder), affinity optimization (AlphaBind), and K-mer hit expansion. Designed for large-scale campaigns, IPIAbDiscov ensures high-quality, developability-optimized candidates with reproducible, fully local workflows.
-
-### Key Highlights
-- Supports **both paired Fab/scFv** (CDR3-focused with barcode) and **single-domain VHH** (CDR1/2/3) formats
-- Robust multi-level QC: fastp filtering, ANARCI/IMGT annotation, contamination checks, rarefaction curves, and Shannon/inverse Simpson diversity metrics
-- Precise clonal enrichment tracking and repeat checking across multiple selection rounds
-- Advanced post-processing modules for biophysical developability, paratope/epitope prediction, iPTM scoring, and machine-learning affinity optimization
-- Generates interactive HTML reports and ready-to-synthesize lead tables (`final_leads_with_ml_and_dev.csv`)
-- Fully local, configurable, and built for therapeutic antibody discovery scientists and bioinformaticians
-
----
-
-**Repository:** https://github.com/bmhoan/IPIAbDiscov  
-**Contact:** hoan.nguyen@proteininnovation.org
-
-# IPIAbDiscov: A Full Python Package for NGS-Based Antibody Discovery (Antibodies and VHH)
-IPIAbDiscov is an unified Python-based workflow ,designed at IPI ,to streamline the analysis of Next-Generation Sequencing (NGS) data from antibody display technologies, such as phage display or yeast display libraries. It provides a command-line interface for processing raw FASTQ files from antibody selection campaigns, enabling researchers to quantify sequence abundance, track enrichment across selection rounds, and identify promising lead candidates for therapeutic antibody development.
-
-IPIAbDiscov allow to accelerate the transition from huge amount of NGS data to validated antibody leads, reducing reliance on traditional low-throughput screening while uncovering rare, high-potential clones often missed in conventional pipelines. Ideal for academic and biotech researchers in antibody discovery engineering.
-
-# Key Features
-
-FASTQ Processing: Quality trimming, filtering, paired-end read merging, and annotation of antibody sequences using tools like fastp and ANARCI for accurate numbering and germline assignment of Fab or scFv fragments.
-
-Data Aggregation: Combine results from multiple samples or rounds to generate comprehensive repertoire tables.
-
-Lead Selection: Automated ranking and selection of top-enriched sequences based on read counts and enrichment metrics.
-
-Repeatability Checks: Identify and quantify repeated or duplicated sequences across datasets.
 
 
-The package is lightweight, dependency-managed (via requirements.txt and Bioconda tools), and configured through YAML files and sample sheets, making it suitable for MiSeq or similar NGS runs in antibody discovery projects.
-Potential Future Enhancements
-
-Developability Assessment: Built-in filters for liabilities (e.g., glycosylation sites, cysteine residues) and integration with external databases for off-target prediction.
-
-
-
-Data Visualization: CDR3 diversity (e.g., Shannon entropy, clonal frequency distributions), Rarefaction curve for checking sequencing depth
-
-Fold Change and Enrichment Analysis: Statistical computation of log-fold changes between pre- and post-selection rounds, with significance testing to highlight antigen-specific binders.
-
-
-Machine Learning Integration: Predictive models for affinity or developability scoring, clustering of related sequences (e.g., lineage grouping), or epitope binning using sequence features.
-
-
-Repository: https://github.com/bmhoan/IPIAbDiscov
 
 
 
