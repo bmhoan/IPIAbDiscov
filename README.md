@@ -1,3 +1,24 @@
+# IPIAbDiscov
+
+**NGS-Based Bioinformatics Pipeline for Fab and VHH Antibody Discovery**
+
+### Abstract
+Next-generation sequencing (NGS) has transformed antibody discovery, but reliable insights require rigorous quality control at every step. IPIAbDiscov is an open-source Python pipeline developed at the Institute for Protein Innovation (IPI) that delivers **end-to-end NGS analysis** for phage- and yeast-display libraries.
+
+From raw FASTQ files to ranked therapeutic leads, it performs comprehensive QC (read quality, merging, annotation, contamination detection, diversity metrics), tracks clonal enrichment across rounds, and culminates in advanced post-processing with biophysical prediction (IPIAbDev), therapeutic profiling (TAP), structure-based scoring (AlphaFold3/Boltz2 iPTM), paratope mapping (ParaAntiProt + Paragraph), binding prediction (AntiBinder), affinity optimization (AlphaBind), and K-mer hit expansion. Designed for large-scale campaigns, IPIAbDiscov ensures high-quality, developability-optimized candidates with reproducible, fully local workflows.
+
+### Key Highlights
+- Supports **both paired Fab/scFv** (CDR3-focused with barcode) and **single-domain VHH** (CDR1/2/3) formats
+- Robust multi-level QC: fastp filtering, ANARCI/IMGT annotation, contamination checks, rarefaction curves, and Shannon/inverse Simpson diversity metrics
+- Precise clonal enrichment tracking and repeat checking across multiple selection rounds
+- Advanced post-processing modules for biophysical developability, paratope/epitope prediction, iPTM scoring, and machine-learning affinity optimization
+- Generates interactive HTML reports and ready-to-synthesize lead tables (`final_leads_with_ml_and_dev.csv`)
+- Fully local, configurable, and built for therapeutic antibody discovery scientists and bioinformaticians
+
+---
+
+**Repository:** https://github.com/bmhoan/IPIAbDiscov  
+**Contact:** hoan.nguyen@proteininnovation.org
 
 # IPIAbDiscov: A Full Python Package for NGS-Based Antibody Discovery (Antibodies and VHH)
 IPIAbDiscov is an unified Python-based workflow ,designed at IPI ,to streamline the analysis of Next-Generation Sequencing (NGS) data from antibody display technologies, such as phage display or yeast display libraries. It provides a command-line interface for processing raw FASTQ files from antibody selection campaigns, enabling researchers to quantify sequence abundance, track enrichment across selection rounds, and identify promising lead candidates for therapeutic antibody development.
