@@ -17,8 +17,8 @@ By integrating rigorous multi-level quality control with advanced post-processin
 - **Clonal analysis**: Data aggregation across samples/rounds, enrichment tracking, repeat/duplication checks, and automated lead ranking
 - **Interactive outputs**: HTML diagnostic report + ready-to-synthesize lead tables (`final_leads_with_ml_and_dev.csv`)
 - **Lightweight & configurable**: YAML + Excel sample-sheet setup, designed for MiSeq and similar NGS runs
-
----
+- **IPIAbDev ML prescreening**: Predicts PSR (polyreactivity), SEC (aggregation/monomer purity), and SPR (specific binder) labels using pre-trained protein language models. Automatically filters top clones for low polyreactivity, high stability, and strong binding potential — dramatically reducing the number of candidates needing expensive wet-lab assays.
+- **K-mer Logistic Regression Hit Expansion**: Learns early enrichment patterns (MACS + FACS rounds) from CDR3 k-mer frequencies and scaffold identity. Rescues promising low-frequency clones and predicts which ones will continue enriching in later stringent rounds, boosting lead recovery without any structural data.---
 
 **Repository:** https://github.com/bmhoan/IPIAbDiscov  
 **Contact:** hoan.nguyen@proteininnovation.org
