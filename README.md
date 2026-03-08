@@ -50,7 +50,7 @@ cd ANARCI
 
 python setup.py install
 
-# How To Use AbodyDiscov
+# How To Use IPIAbDiscov
 
 #1) run step by step
 
