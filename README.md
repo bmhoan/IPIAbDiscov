@@ -1,4 +1,25 @@
 
+# IPIAbDiscov
+
+**NGS-Based Bioinformatics Pipeline for Fab and VHH Antibody Discovery**
+
+### Abstract
+IPIAbDiscov is a unified, open-source Python workflow developed at the Institute for Protein Innovation (IPI) to streamline the analysis of Next-Generation Sequencing (NGS) data from antibody display technologies (phage and yeast display libraries). It provides a clean command-line interface for processing raw FASTQ files from selection campaigns, enabling researchers to quantify sequence abundance, track clonal enrichment across rounds, detect contamination or repeats, and rapidly identify high-potential lead candidates for therapeutic antibody development.
+
+By integrating rigorous multi-level quality control with advanced post-processing modules — including **machine-learning prescreening of PSR (polyreactivity), SEC (aggregation/monomer purity), and SPR (specific binder) labels via IPIAbDev**, plus **K-mer hit expansion (rare clone rescue)** using logistic regression — IPIAbDiscov accelerates the transition from massive NGS datasets to validated, developability-optimized antibody leads. This approach uncovers rare, high-affinity clones often missed by traditional low-throughput screening. Ideal for academic and biotech researchers in antibody discovery and engineering.
+
+### Key Features
+- **Full end-to-end workflow**: From raw FASTQ to ranked leads — all in one reproducible pipeline
+- **Robust QC at every step**: fastp quality trimming, paired-end merging, ANARCI/IMGT annotation, contamination detection, rarefaction curves, and diversity metrics (Shannon entropy, inverse Simpson’s, evenness)
+- **Library support**: Standard Fab/scFv (CDR3-focused with barcode) and single-domain VHH (CDR1 + CDR2 + CDR3)
+- **Clonal analysis**: Data aggregation across samples/rounds, enrichment tracking, repeat/duplication checks, and automated lead ranking
+- **Interactive outputs**: HTML diagnostic report + ready-to-synthesize lead tables (`final_leads_with_ml_and_dev.csv`)
+- **Lightweight & configurable**: YAML + Excel sample-sheet setup, designed for MiSeq and similar NGS runs
+
+---
+
+**Repository:** https://github.com/bmhoan/IPIAbDiscov  
+**Contact:** hoan.nguyen@proteininnovation.org
 # IPIAbDiscov **NGS-Based Bioinformatics Pipeline for Fab and VHH Antibody Discovery**
 
 ### Abstract
