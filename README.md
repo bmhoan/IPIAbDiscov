@@ -1,4 +1,4 @@
-
+![Alt text](images/ipiabdiscov.png)
 # IPIAbDiscov
 
 **NGS-Based Bioinformatics Pipeline for Fab and VHH Antibody Discovery**
