@@ -18,8 +18,7 @@ By integrating rigorous multi-level quality control, multiple round data process
 
 ---
 
-**Repository:** https://github.com/bmhoan/IPIAbDiscov  
-**Contact:** hoan.nguyen@proteininnovation.org
+**Repository:** https://github.com/bmhoan/NGSAbDiscov  
 
 
 
@@ -31,7 +30,7 @@ By integrating rigorous multi-level quality control, multiple round data process
 
 #download abodydiscov from ipi githup:  
 
-git clone https://github.com/bmhoan/IPIAbDiscov.git
+git clone https://github.com/bmhoan/NGSAbDiscov.git
 
 #install requirements
 
